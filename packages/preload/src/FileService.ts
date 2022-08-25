@@ -13,6 +13,7 @@ class FileService implements IFileService {
   constructor() {
     this.getHomeDir = this.getHomeDir.bind(this);
     this.ls = this.ls.bind(this);
+    this.size = this.size.bind(this);
   }
 
   getHomeDir() {
@@ -34,6 +35,17 @@ class FileService implements IFileService {
     } catch (e) {
       return false;
     }
+  }
+
+  size(path: string) {
+    if (!this.exist(path)) return;
+    const byte = fs.statSync(path).size;
+
+    const convertByteToKilobyte = (n: number) => n / 1000;
+    const convertByteToMegabyte = (n: number) =>
+      convertByteToKilobyte(n) / 1000;
+
+    return convertByteToMegabyte(byte);
   }
 
   async ls(path: string) {
