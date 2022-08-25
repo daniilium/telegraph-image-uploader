@@ -1,24 +1,22 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import App from "./App";
-import "./index.css";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 
-let appPath: null | string = null;
-export const appPathPromise = new Promise((resolve) => {
-  setInterval(() => {
-    if (appPath) resolve(appPath);
-  }, 10);
-});
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-window.electronAPI.handleMainToRender((event: any, value: string) => {
-  if (value) appPath = value;
-});
+import { StepOne } from "./StepOne";
+import { StepThree } from "./StepThree";
+import { StepTwo } from "./StepTwo";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
 );
 root.render(
   <React.StrictMode>
-    <App />
+    <BrowserRouter>
+      <Routes>
+        <Route index element={<StepOne />} />
+        <Route path="step-two" element={<StepTwo />} />
+        <Route path="step-three" element={<StepThree />} />
+      </Routes>
+    </BrowserRouter>
   </React.StrictMode>
 );
