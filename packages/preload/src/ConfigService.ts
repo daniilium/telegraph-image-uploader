@@ -3,9 +3,9 @@ import * as path from "path";
 // import * as fs from "fs";
 import { fileService, IFileService } from "./FileService";
 
-interface IConfigService {
-  readKey(key: string): string;
-  writeKey(key: string, value: string): void;
+export interface IConfigService {
+  readKey(key: keyof initConfig): string;
+  writeKey(key: keyof initConfig, value: string): void;
 }
 
 type initConfig = {
@@ -17,10 +17,7 @@ class ConfigService implements IConfigService {
   private fileService: IFileService;
   private path: string;
 
-  private initConfig: initConfig = {
-    token: "",
-    workFolder: "",
-  };
+  private initConfig: initConfig;
 
   constructor(fileService: IFileService) {
     this.fileService = fileService;
@@ -29,6 +26,11 @@ class ConfigService implements IConfigService {
     const homedir = os.homedir();
     const configName = ".telegraph-image-uploader.json";
     this.path = path.join(homedir, configName);
+
+    this.initConfig = {
+      token: "",
+      workFolder: homedir,
+    };
 
     this.exist = this.exist.bind(this);
     this.create = this.create.bind(this);
