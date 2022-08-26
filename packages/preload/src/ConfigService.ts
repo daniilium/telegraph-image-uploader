@@ -28,7 +28,7 @@ class ConfigService implements IConfigService {
     this.path = path.join(homedir, configName);
 
     this.initConfig = {
-      token: "",
+      token: "d3b25feccb89e508a9114afb82aa421fe2a9712b963b387cc5ad71e58722",
       workFolder: homedir,
     };
 
