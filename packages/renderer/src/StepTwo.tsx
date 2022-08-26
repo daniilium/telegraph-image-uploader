@@ -1,5 +1,6 @@
 import { configService, fileService, imageService } from "#preload";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const cutName = (name: string) => {
   if (name.length > 25) return `${name.slice(0, 10)} ... ${name.slice(-10)}`;
@@ -14,8 +15,9 @@ const imagesText = (images: string[]) => {
 
 export function StepTwo() {
   const [images, setImages] = useState([""]);
-  const [overSize, setOverSize] = useState<null | string[]>(null);
+  const [overSize, setOverSize] = useState<string[]>([""]);
   const folder = configService.readKey("workFolder");
+  const navigate = useNavigate();
 
   const getImages = () => {
     const asyncWork = async () => {
@@ -25,7 +27,6 @@ export function StepTwo() {
 
       const overSize = imageService.sizeValidation(sortImages);
       setOverSize(overSize);
-      console.log(overSize);
 
       setImages(sortImages);
     };
@@ -33,30 +34,37 @@ export function StepTwo() {
     asyncWork();
   };
 
+  const displayNone = { display: "none" };
+
+  const showError = () => {
+    if (overSize.length === 0) return displayNone;
+  };
+
+  const showNextButton = () => {
+    if (overSize.length > 0) return displayNone;
+  };
+
   useEffect(() => {
     getImages();
   }, []);
 
+  const onSubmit = () => {
+    if (!overSize.length) {
+      imageService.setImageList(images);
+      navigate("/step-three");
+    }
+  };
+
   return (
-    <>
-      <h1>шаг 2/3</h1>
-      <a href="/">назад</a>
-      <br />
-      <br />
-
-      <p>Изображений в папке: {images.length}</p>
-
-      {overSize && (
-        <>
-          <p>Слишком большие изображения:</p>
-          {overSize.map((name) => (
-            <p>{name}</p>
-          ))}
-        </>
-      )}
+    <div className="wrapper">
+      <header>
+        <h1 className="title">Шаг 2/3</h1>
+        <p className="subtitle">Проверка и подготовка изображений</p>
+      </header>
+      <a href="#/">назад</a>
 
       <div>
-        <p>Порядок изображений:</p>
+        <p>Порядок загрузки изображений:</p>
         <textarea
           value={imagesText(images)}
           cols={30}
@@ -64,12 +72,30 @@ export function StepTwo() {
           readOnly
           disabled
         ></textarea>
+
+        <p>Всего изображений: {images.length}</p>
       </div>
 
-      <button onClick={getImages}>Обновить</button>
-      <br />
-      <br />
-      <a href="/step-three">Подтверждаю</a>
-    </>
+      <button onClick={getImages} className="button">
+        Обновить
+      </button>
+
+      <div className="error" style={showError()}>
+        <p>
+          [Ошибка] есть изображения больше {imageService.getMaxSizeFile()} MB:
+        </p>
+        <textarea
+          value={imagesText(overSize)}
+          cols={30}
+          rows={overSize.length}
+          readOnly
+          disabled
+        ></textarea>
+      </div>
+
+      <button onClick={onSubmit} className="button" style={showNextButton()}>
+        Дальше
+      </button>
+    </div>
   );
 }
