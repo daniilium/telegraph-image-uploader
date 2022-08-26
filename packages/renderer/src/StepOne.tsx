@@ -1,12 +1,13 @@
-import { SyntheticEvent, useRef, useState } from "react";
-
 import { configService } from "#preload";
+import { SyntheticEvent, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export function StepOne() {
   const [workFolder, setWorkFolder] = useState(
     configService.readKey("workFolder")
   );
   const folderInput = useRef(null);
+  const navigate = useNavigate();
 
   const chooseFolder = (e: SyntheticEvent) => {
     const input = e.target as HTMLInputElement;
@@ -19,14 +20,23 @@ export function StepOne() {
     configService.writeKey("workFolder", newWorkFolder);
   };
 
+  const handleNext = () => {
+    navigate("#/step-two");
+  };
+
   return (
-    <>
-      <h1>шаг 1/3</h1>
+    <div className="wrapper">
+      <header>
+        <h1 className="title">Шаг 1/3</h1>
+        <p className="subtitle">Выбор изображений</p>
+      </header>
+
       <p>
-        загрузить изображения из <span>{workFolder || "*не выбрано*"}</span>
+        загрузить из <span>{workFolder}</span>
       </p>
-      <label style={{ textDecoration: "underline" }}>
-        или запомнить и загружать из ...
+
+      <label className="link">
+        или загружать из ...
         <input
           style={{ display: "none" }}
           type="file"
@@ -37,9 +47,10 @@ export function StepOne() {
           onChange={chooseFolder}
         />
       </label>
-      <br />
-      <br />
-      <a href="/step-two">Подтверждаю</a>
-    </>
+
+      <button onClick={handleNext} className="button">
+        Дальше
+      </button>
+    </div>
   );
 }
