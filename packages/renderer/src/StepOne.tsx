@@ -21,7 +21,7 @@ export function StepOne() {
   };
 
   const handleNext = () => {
-    navigate("#/step-two");
+    navigate("/step-two");
   };
 
   return (
