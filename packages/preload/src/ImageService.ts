@@ -23,7 +23,7 @@ class ImageService implements IImageService {
     this.getMaxSizeFile = this.getMaxSizeFile.bind(this);
     this.setImageList = this.setImageList.bind(this);
     this.uploadImagesList = this.uploadImagesList.bind(this);
-    this.getImageTags = this.getImageTags.bind(this);
+    this.createImageTags = this.createImageTags.bind(this);
   }
 
   filterImages(files: string[]) {
@@ -80,6 +80,8 @@ class ImageService implements IImageService {
     const result = await Promise.all(arrayPromise);
 
     this.loadImageList = result.map((elem) => elem.link);
+
+    return this.loadImageList;
   }
 
   private async uploadImage(path: string) {
@@ -117,11 +119,9 @@ class ImageService implements IImageService {
       });
   }
 
-  getImageTags() {
-    if (!this.loadImageList) return;
-
+  createImageTags(images: string[]) {
     const result = [];
-    for (let link of this.loadImageList) {
+    for (let link of images) {
       const element = {
         tag: "img",
         attrs: { src: link },
