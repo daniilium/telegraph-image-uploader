@@ -49,6 +49,11 @@
     "vitest": "0.22.1"
   },
   "dependencies": {
+    "@emotion/react": "^11.10.4",
+    "@emotion/styled": "^11.10.4",
+    "@mantine/core": "^5.2.4",
+    "@mantine/form": "^5.2.4",
+    "@mantine/hooks": "^5.2.4",
     "electron-updater": "5.2.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
