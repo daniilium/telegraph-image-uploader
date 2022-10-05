@@ -1,139 +1,165 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { SubmitHandler, useForm } from "react-hook-form";
+
 import {
-  Container,
+  configService,
+  fileService,
+  imageService,
+  pageService,
+} from "#preload";
+import { Button, ErrorPin, Text } from "../components/atoms";
+import { Header } from "../components/organisms";
+import {
+  FileInput,
+  FolderInput,
   List,
-  ScrollArea,
-  Space,
-  Stack,
-  Text,
-  Title,
-} from "@mantine/core";
-import { useForm } from "@mantine/form";
+  ListItem,
+} from "../components/molecules";
+import { Container, Stack } from "../components/layout";
+import { colors } from "../theme";
 
-import { configService, fileService, imageService } from "#preload";
-
-import { Button } from "../components/Button";
-import { FileInput } from "../components/FileInput";
-import { FolderInput } from "../components/FolderInput";
-import { Subtitle } from "../components/Subtitle";
+interface FormInput {
+  folder: string;
+  archive: string;
+  bigImages?: string[];
+}
 
 export function StepOne() {
-  const [folder, setFolder] = useState(configService.readKey("workFolder"));
-  const [images, setImages] = useState([""]);
-  const [imageErrors, setImageErrors] = useState<string[] | null>();
-  const viewportImages = useRef<HTMLDivElement>(null);
-  const viewportErrorsImages = useRef<HTMLDivElement>(null);
+  const {
+    handleSubmit,
+    formState: { errors },
+    setValue,
+    setError,
+    clearErrors,
+  } = useForm<FormInput>();
+
   const navigate = useNavigate();
 
+  const [folder, setFolder] = useState<string>(
+    configService.readKey("workFolder")
+  );
+  const [archive, setArchive] = useState<string>();
+
+  const [images, setImages] = useState<string[]>();
+  const [bigImages, setBigImages] = useState<string[]>();
   const getImages = async () => {
     const files = await fileService.ls(folder);
     const images = imageService.filterImages(files);
     const sortImages = imageService.sort(images);
-    const overSize = imageService.sizeValidation(files);
-    setImageErrors(overSize);
 
     setImages(sortImages);
+
+    const bigImages = await imageService.sizeValidation(sortImages, folder);
+    setBigImages(bigImages);
   };
 
   useEffect(() => {
+    pageService.reset();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      if (!archive) return;
+
+      await fileService.unzip(archive);
+      setFolder(fileService.getTempDir());
+    })();
+  }, [archive]);
+
+  useEffect(() => {
+    setValue("folder", folder);
     getImages();
+  }, [folder, archive]);
 
-    // проскролить список изображений до конца
-    if (viewportImages.current)
-      viewportImages.current.scrollTo({
-        top: viewportImages.current.scrollHeight,
-        behavior: "smooth",
+  useEffect(() => {
+    // validate the existence of images
+    if (images?.length) clearErrors("folder");
+    if (!images?.length)
+      setError("folder", {
+        type: "no images",
+        message: "need images to upload",
       });
-  }, [folder]);
+  }, [images]);
 
-  const form = useForm({});
+  useEffect(() => {
+    // validate the size of images
+    if (!bigImages) return;
 
-  const onSubmit = async (values: any) => {
-    await getImages();
+    if (bigImages.length)
+      setError("bigImages", {
+        type: "big images",
+        message: `The maximum size of images to upload is ${imageService.getMaxSizeFile()}, images below are not sized to fit:`,
+      });
 
-    if (images.length === 0) {
-      form.setErrors({ images: "нужны изображения для загрузки" });
-      return;
+    if (!bigImages?.length) clearErrors("bigImages");
+  }, [bigImages]);
+
+  const onSubmit: SubmitHandler<FormInput> = async (values) => {
+    console.log("submit: ", values);
+
+    try {
+      if (!images) return;
+
+      pageService.setFolder(folder);
+      navigate("/step-two");
+    } catch (error) {
+      alert(error);
     }
-
-    const errors = imageService.sizeValidation(await fileService.ls(folder));
-    if (errors.length > 0) {
-      form.setErrors({ imageErrors: "эти файлы не загрузятся" });
-      return;
-    }
-
-    imageService.setImageList(images);
-    navigate("/step-two");
   };
 
   return (
-    <Container size={500}>
-      <Space h="xl" />
-      <Stack spacing={"xs"}>
-        <header>
-          <Title order={1}>Шаг 1/3</Title>
-          <Subtitle>Выбор и подготовка изображений</Subtitle>
-        </header>
+    <Container>
+      <Stack gap={16}>
+        <Header title="Step 1/3" subtitle="choose and sort image" />
 
-        <Stack spacing={"xs"}>
-          <FolderInput
-            folder={folder}
-            changeFolder={setFolder}
-            label="Загрузить из папки:"
-          />
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <Stack gap={16}>
+            <FolderInput
+              folder={folder}
+              onChange={setFolder}
+              label="Load image in folder:"
+            />
 
-          <FileInput
-            placeholder="Выбрать архив zip"
-            label="или загрузить архив..."
-            accept=".zip"
-          />
-        </Stack>
+            <FileInput
+              label="Load image in archive:"
+              placeholder="choose archive"
+              accept=".zip"
+              onChange={setArchive}
+            />
 
-        <form onSubmit={form.onSubmit(onSubmit)}>
-          <Stack spacing={"xs"}>
-            <Text>Список изображений:</Text>
+            <List>
+              <Text>Order of images to upload:</Text>
+              {images?.map((image, index) => (
+                <ListItem key={image}>
+                  {index + 1}. {image}
+                </ListItem>
+              ))}
+            </List>
 
-            <ScrollArea
-              style={{ width: 300, height: images.length * 20 }}
-              viewportRef={viewportImages}
-            >
-              <List type="ordered" size="xs" withPadding>
-                {images.map((image) => (
-                  <List.Item key={image}>{image}</List.Item>
-                ))}
-              </List>
-            </ScrollArea>
+            <Stack>
+              <Text>Total image: {images?.length}</Text>
+              {errors.folder?.type === "no images" && (
+                <ErrorPin>{errors.folder?.message}</ErrorPin>
+              )}
+            </Stack>
 
-            <Text>Всего изображений: {images.length}</Text>
+            {errors.bigImages && (
+              <Stack gap={16}>
+                <List>
+                  <Text style={{ color: colors.red }}>
+                    {errors.bigImages?.message}
+                  </Text>
+                  {bigImages?.map((image, index) => (
+                    <ListItem key={image}>
+                      {index + 1}. {image}
+                    </ListItem>
+                  ))}
+                </List>
 
-            <Text color="red">{form.errors?.images}</Text>
-
-            {imageErrors?.length !== 0 && (
-              <>
-                <Text>
-                  Есть {imageErrors?.length} файл(ов) больше{" "}
-                  {imageService.getMaxSizeFile()}
-                  MB:
-                </Text>
-
-                <Text color="red">{form.errors?.imageErrors}</Text>
-              </>
+                <Button onClick={getImages}>Update</Button>
+              </Stack>
             )}
-
-            <ScrollArea
-              style={{
-                width: 300,
-                height: imageErrors ? imageErrors.length * 20 : 0,
-              }}
-              viewportRef={viewportErrorsImages}
-            >
-              <List type="ordered" size="xs" withPadding>
-                {imageErrors?.map((image) => (
-                  <List.Item key={image}>{image}</List.Item>
-                ))}
-              </List>
-            </ScrollArea>
 
             <Button type="submit">Submit</Button>
           </Stack>
@@ -141,15 +167,4 @@ export function StepOne() {
       </Stack>
     </Container>
   );
-}
-
-function cutName(name: string) {
-  if (name.length > 25) return `${name.slice(0, 10)} ... ${name.slice(-10)}`;
-  else return name;
-}
-
-function imagesText(images: string[]) {
-  return images
-    .map((name, index) => `${index + 1}. ${cutName(name)}  \n`)
-    .join("");
 }

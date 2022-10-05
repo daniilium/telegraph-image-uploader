@@ -1,32 +1,32 @@
 import * as fs from "fs";
 import * as path from "path";
-import { configService, IConfigService } from "./ConfigService";
-import { fileService, IFileService } from "./FileService";
-import { contentNode } from "./TelegraphService";
+import { configService } from "./ConfigService";
+import { fileService } from "./FileService";
+import { ContentNode } from "./TelegraphService.type";
 
-interface IImageService {}
-
-class ImageService implements IImageService {
-  private fileService: IFileService;
-  private configService: IConfigService;
+class ImageService {
   private maxSizeInMegabytes = 1.5;
   private imageList: string[] | undefined;
   private loadImageList: string[] | undefined;
 
-  constructor(fileService: IFileService, configService: IConfigService) {
-    this.fileService = fileService;
-    this.configService = configService;
-
+  constructor() {
     this.filterImages = this.filterImages.bind(this);
     this.sort = this.sort.bind(this);
-    this.sizeValidation = this.sizeValidation.bind(this);
+
     this.getMaxSizeFile = this.getMaxSizeFile.bind(this);
-    this.setImageList = this.setImageList.bind(this);
-    this.uploadImagesList = this.uploadImagesList.bind(this);
+    this.sizeValidation = this.sizeValidation.bind(this);
+
+    this.convertToFullPaths = this.convertToFullPaths.bind(this);
+    this.uploadImage = this.uploadImage.bind(this);
+    this.uploadImages = this.uploadImages.bind(this);
     this.createImageTags = this.createImageTags.bind(this);
   }
 
-  filterImages(files: string[]) {
+  getMaxSizeFile(): number {
+    return this.maxSizeInMegabytes;
+  }
+
+  filterImages(files: string[]): string[] {
     return files.filter((file: string) => {
       const allowedExtname = [".jpg", ".png", ".jpeg"];
       const extname = path.extname(file);
@@ -34,7 +34,7 @@ class ImageService implements IImageService {
     });
   }
 
-  sort(files: string[]) {
+  sort(files: string[]): string[] {
     const basename = (elem: string) => path.basename(elem, path.extname(elem));
     const getNumber = (name: string): number => Number(name.match(/\d+/g));
 
@@ -48,45 +48,33 @@ class ImageService implements IImageService {
     });
   }
 
-  sizeValidation(files: string[]) {
-    const folder = this.configService.readKey("workFolder");
-    const fullPath = (file: string) => path.join(folder, file);
+  async sizeValidation(files: string[], folder: string): Promise<string[]> {
+    const getFullPath = (file: string) => path.join(folder, file);
 
-    const errorsFiles = files.filter((path: string) => {
-      const size = fileService.size(fullPath(path)) as number;
-      if (size > this.maxSizeInMegabytes) return path;
+    const bigFiles = files.filter((path: string) => {
+      const size = fileService.size(getFullPath(path));
+      if (size && size > this.maxSizeInMegabytes) return path;
     });
 
-    return errorsFiles;
+    return bigFiles;
   }
 
-  getMaxSizeFile() {
-    return this.maxSizeInMegabytes;
+  convertToFullPaths(files: string[], folder: string) {
+    return files.map((fileName) => path.join(folder, fileName));
   }
 
-  setImageList(array: string[]) {
-    this.imageList = array;
-  }
-
-  async uploadImagesList() {
-    if (typeof this.imageList === "undefined") return;
-
-    const workDir = configService.readKey("workFolder");
-    const pathList = this.imageList.map((image) => path.join(workDir, image));
-
-    const arrayPromise = pathList.map(
-      async (elem) => await this.uploadImage(elem)
+  async uploadImages(fullPaths: string[]): Promise<string[]> {
+    const arrayPromise = fullPaths.map(
+      async (path) => await this.uploadImage(path)
     );
     const result = await Promise.all(arrayPromise);
 
-    this.loadImageList = result.map((elem) => elem.link);
-
-    return this.loadImageList;
+    return result.map((elem) => elem.link);
   }
 
-  private async uploadImage(path: string) {
+  async uploadImage(fullPath: string) {
     const form = new FormData();
-    const value = fs.readFileSync(path);
+    const value = fs.readFileSync(fullPath);
     const blob = new Blob([value], { type: "image/png" });
 
     const filename = {
@@ -103,10 +91,10 @@ class ImageService implements IImageService {
     })
       .then((result) => result.json())
       .then((result) => {
-        if (result.error) {
-          console.log(result);
-          // throw result.error;
-        }
+        // if (result.error) {
+        //   console.log(result);
+        //   // throw result.error;
+        // }
 
         if (result[0] && result[0].src) {
           return {
@@ -119,18 +107,11 @@ class ImageService implements IImageService {
       });
   }
 
-  createImageTags(images: string[]) {
-    const result = [];
-    for (let link of images) {
-      const element = {
-        tag: "img",
-        attrs: { src: link },
-      } as contentNode;
-
-      result.push(element);
-    }
-    return result;
+  createImageTags(images: string[]): ContentNode[] {
+    return images.map(
+      (link): ContentNode => ({ tag: "img", attrs: { src: link } })
+    );
   }
 }
 
-export const imageService = new ImageService(fileService, configService);
+export const imageService = new ImageService();

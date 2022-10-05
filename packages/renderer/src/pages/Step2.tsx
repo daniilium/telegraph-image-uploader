@@ -1,72 +1,103 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Container, Space, Stack, Switch, Title } from "@mantine/core";
-import { useForm } from "@mantine/form";
+import { SubmitHandler, useForm } from "react-hook-form";
 
-import { configService, telegraphService } from "#preload";
+import { configService, telegraphService, pageService } from "#preload";
+import { Container, Stack } from "../components/layout";
+import { Button, ErrorPin, InfoPin } from "../components/atoms";
+import { TextInput } from "../components/molecules";
+import { Header } from "../components/organisms";
 
-import { TextInput } from "../components/TextInput";
-import { Button } from "../components/Button";
-import { Subtitle } from "../components/Subtitle";
+interface FormInput {
+  token: string;
+  availability: string;
+}
 
 export function StepTwo() {
   const navigate = useNavigate();
 
-  const [tokenSaveCheckbox, setTokenSaveCheckbox] = useState(true);
+  const {
+    handleSubmit,
+    formState: { errors },
+    setError,
+    clearErrors,
+    setValue,
+  } = useForm<FormInput>();
 
-  const form = useForm({
-    initialValues: {
-      token: configService.readKey("token"),
-    },
+  const [token, setToken] = useState<string>(configService.readKey("token"));
+  useEffect(() => {
+    setValue("token", token);
 
-    validate: {
-      token: (value) =>
-        value.length === 60 ? null : "Токен должен быть 60 символов",
-    },
-  });
+    if (token.length !== 60) {
+      setError("token", {
+        type: "length",
+        message: "length must be 60 characters",
+      });
+    } else clearErrors("token");
 
-  const onSubmit = async (values: any) => {
-    const token = values.token;
-    const userData = await telegraphService.getAccount(token);
+    clearErrors("availability");
+  }, [token]);
 
-    if (userData) {
-      if (tokenSaveCheckbox) configService.writeKey("token", token);
+  const onSubmit: SubmitHandler<FormInput> = async (values) => {
+    const { token } = values;
+
+    try {
+      const user = await telegraphService.getAccount(token);
+      if (!user) {
+        setError("availability", {
+          message: "invalid token",
+        });
+        return;
+      }
+
+      // console.log("submit: ", values);
+      pageService.setToken(values.token);
+      pageService.setAuthorName(user.author_name);
+      pageService.setAuthorUrl(user.author_url);
+
       navigate("/step-three");
-    }
-
-    if (!userData) {
-      form.setErrors({ token: "Токен инвалид" });
-      return;
+    } catch (error) {
+      alert(error);
     }
   };
 
   return (
-    <Container size={500}>
-      <Space h="xl" />
-      <Stack spacing={"xs"}>
-        <header>
-          <Title order={1}>Шаг 2/3</Title>
-          <Subtitle>настройка аккаунта telegra.ph</Subtitle>
-        </header>
+    <Container>
+      <Stack gap={16}>
+        <Header title="Step 2/3" subtitle="use telegraph profile" />
         <a href="#/">назад</a>
 
-        <form onSubmit={form.onSubmit((values) => onSubmit(values))}>
-          <Stack spacing={"xs"}>
-            <TextInput
-              label="Используемый токен"
-              withAsterisk
-              {...form.getInputProps("token")}
-            />
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <Stack gap={16}>
+            <Stack>
+              <TextInput
+                initValue={token}
+                onChange={setToken}
+                label="Use token:"
+                placeholder="token"
+              />
 
-            <Switch
-              label="Сохранить токен"
-              color="dark"
-              size="md"
-              checked={tokenSaveCheckbox}
-              onChange={(event) =>
-                setTokenSaveCheckbox(event.currentTarget.checked)
-              }
-            />
+              {errors.token?.type === "length" && (
+                <ErrorPin>{errors.token.message}</ErrorPin>
+              )}
+              {errors["availability"] && (
+                <ErrorPin>{errors["availability"].message}</ErrorPin>
+              )}
+
+              <InfoPin>
+                the token is the login and password for pages management
+              </InfoPin>
+
+              <InfoPin>
+                use the token to get the name of the author and a link to the
+                author from the token
+              </InfoPin>
+
+              <InfoPin>
+                https://octograph.netlify.app will allow you to create and
+                configure a token
+              </InfoPin>
+            </Stack>
 
             <Button type="submit">Submit</Button>
           </Stack>

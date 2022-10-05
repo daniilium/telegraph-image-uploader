@@ -1,7 +1,10 @@
 import styled from "@emotion/styled";
 import { SyntheticEvent, useRef, useState } from "react";
+
 import { configService } from "#preload";
-import { colors, fonts } from "../theme";
+import { colors, fonts } from "../../theme";
+import { Label } from "../atoms";
+import { Stack } from "../layout";
 
 const _button = styled.button`
   width: 100%;
@@ -20,24 +23,20 @@ const _button = styled.button`
   }
 `;
 
-const _label = styled.label`
-  font-family: ${fonts.main};
-  font-size: 18px;
-`;
-
 type Props = {
   folder?: string;
   label?: string;
-  // onChange?(): void;
-  changeFolder?(newFolder: string): void;
+  onChange?(path: string): void;
+  // changeFolder?(newFolder: string): void;
 };
 
 export function FolderInput(props: Props) {
-  const { folder, label, changeFolder } = props;
+  const { folder, label, onChange } = props;
   const inputRef = useRef<HTMLInputElement>(null);
   const [workFolder, setWorkFolder] = useState(folder);
 
   const handleClick = (e: SyntheticEvent) => {
+    e.preventDefault();
     if (inputRef.current) inputRef.current.click();
   };
 
@@ -48,30 +47,30 @@ export function FolderInput(props: Props) {
     const file = input.files?.[0] as any;
     const filePath = file.path as string;
 
-    const newWorkFolder = configService.chooseFolder(filePath);
-    setWorkFolder(newWorkFolder);
+    const newFolder = configService.chooseFolder(filePath);
 
-    if (changeFolder) changeFolder(newWorkFolder);
-    // if (onChange) onChange();
+    setWorkFolder(newFolder);
+    if (onChange) onChange(newFolder);
   };
 
   return (
-    <div>
-      <_label>{label}</_label>
-      <br />
-      <_button onClick={(e: SyntheticEvent) => handleClick(e)}>
-        {workFolder}
-      </_button>
+    <Label>
+      <Stack>
+        {label}
+        <_button onClick={(e: SyntheticEvent) => handleClick(e)}>
+          {workFolder}
+        </_button>
 
-      <input
-        ref={inputRef}
-        onChange={chooseFolder}
-        style={{ display: "none" }}
-        type="file"
-        // @ts-ignore
-        directory=""
-        webkitdirectory=""
-      />
-    </div>
+        <input
+          ref={inputRef}
+          onChange={chooseFolder}
+          style={{ display: "none" }}
+          type="file"
+          // @ts-ignore
+          directory=""
+          webkitdirectory=""
+        />
+      </Stack>
+    </Label>
   );
 }

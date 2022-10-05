@@ -1,117 +1,124 @@
-import {
-  Container,
-  CopyButton,
-  Modal,
-  Space,
-  Stack,
-  Title,
-} from "@mantine/core";
-import { useForm } from "@mantine/form";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { SubmitHandler, useForm } from "react-hook-form";
 
-import { imageService, telegraphService } from "#preload";
+import { fileService, pageService } from "#preload";
+import { Container, Stack } from "../components/layout";
+import { Header, Modal } from "../components/organisms";
+import { FileInput, TextInput } from "../components/molecules";
+import { Button, ErrorPin } from "../components/atoms";
 
-import { Button } from "../components/Button";
-import { TextInput } from "../components/TextInput";
-import { Subtitle } from "../components/Subtitle";
+interface FormInput {
+  title: string;
+  topText?: string;
+  endImage?: string;
+}
 
 export function StepThree() {
-  const [pageURL, setPageURL] = useState("null");
-  const createPage = async (title: string) => {
-    const images = await imageService.uploadImagesList();
-    if (!images) {
-      alert("нет images");
-      setIsDisabled(false);
-      return;
+  const {
+    handleSubmit,
+    formState: { errors },
+    setError,
+    clearErrors,
+    setValue,
+  } = useForm<FormInput>();
+
+  const [pageLink, setPageLink] = useState<string>();
+  const [showModal, setShowModal] = useState(false);
+  const [title, setTitle] = useState<string>("");
+  useEffect(() => {
+    setValue("title", title);
+    const length = title?.length || 0;
+
+    if (length < 1) {
+      setError("title", {
+        type: "minLength",
+        message: "minimum length 1 character",
+      });
     }
 
-    const imageTags = imageService.createImageTags(images);
+    if (length > 256) {
+      setError("title", {
+        type: "maxLength",
+        message: `exceeds the allowed length by ${length - 256} character(s)`,
+      });
+    }
 
-    const content = imageTags;
-    const page = await telegraphService.createPage(title, content);
-    if (page) setPageURL(page.url);
-    setOpened(true);
+    if (length >= 1 && length <= 256) clearErrors("title");
+  }, [title]);
+
+  const onSubmit: SubmitHandler<FormInput> = async (values) => {
+    console.log("submit: ", values);
+
+    try {
+      if (values.endImage) await pageService.setEndImage(values.endImage);
+      if (values.topText) pageService.setTopText(values.topText);
+      pageService.setTitle(values.title);
+
+      const page = await pageService.create();
+      setPageLink(page?.url);
+      setShowModal(true);
+    } catch (error) {
+      alert(error);
+    }
   };
 
-  const [opened, setOpened] = useState(false);
-
-  const form = useForm({
-    initialValues: {
-      title: "",
-    },
-
-    validate: {
-      title: (value) =>
-        value.length >= 1 && value.length <= 256
-          ? null
-          : "Длина должна быть от 1 до 256 символов",
-    },
-  });
-
-  const [isDisabled, setIsDisabled] = useState(false);
-  const onSubmit = (values: any) => {
-    const title = values.title;
-    const chars = title.replace(/ /g, "");
-
-    if (chars) {
-      setIsDisabled(true);
-      createPage(title);
-    }
-
-    if (!chars) {
-      form.setErrors({
-        title: "Заголовок должен содержать символы кроме пробелов",
-      });
-      return;
-    }
+  const copyLink = () => {
+    if (pageLink) fileService.copyText(pageLink);
   };
 
   return (
     <>
-      <Container size={500}>
-        <Space h="xl" />
-        <Stack spacing={"xs"}>
-          <header>
-            <Title order={1}>Шаг 3/3</Title>
-            <Subtitle>Загрузка в telegra.ph</Subtitle>
-          </header>
+      <Container>
+        <Stack gap={16}>
+          <Header title="Step 3/3" subtitle="upload to Telegra.ph" />
 
           <a href="#/step-two">назад</a>
 
-          <form onSubmit={form.onSubmit(onSubmit)}>
-            <Stack spacing={"xs"}>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <Stack gap={16}>
+              <Stack>
+                <TextInput
+                  label="Page title:"
+                  placeholder="title"
+                  onChange={setTitle}
+                />
+
+                {errors.title?.type === "minLength" && (
+                  <ErrorPin>{errors.title.message}</ErrorPin>
+                )}
+                {errors.title?.type === "maxLength" && (
+                  <ErrorPin>{errors.title.message}</ErrorPin>
+                )}
+              </Stack>
+
               <TextInput
-                label="Заголовок страницы:"
-                placeholder="Заголовок страницы"
-                {...form.getInputProps("title")}
+                label="Add the text to the top of the page:"
+                placeholder="text"
+                onChange={(value: string) => setValue("topText", value)}
               />
-              <Button loading={isDisabled} disabled={isDisabled} type="submit">
-                Создать страницу
-              </Button>
+
+              <FileInput
+                label="Add an image to the end:"
+                placeholder="image"
+                onChange={(fullPath: string) => setValue("endImage", fullPath)}
+              />
+
+              <Button type="submit">Upload</Button>
+
+              <Button onClick={copyLink}>Copy</Button>
+
+              {pageLink && (
+                <Modal
+                  title="Success"
+                  text={`Page created, copy url? \n ${pageLink}`}
+                  onClick={copyLink}
+                  show={showModal}
+                />
+              )}
             </Stack>
           </form>
         </Stack>
       </Container>
-
-      <Modal
-        centered
-        opened={opened}
-        onClose={() => setOpened(false)}
-        title="Загрузка завершена"
-      >
-        <p>{pageURL}</p>
-        <CopyButton value={pageURL}>
-          {({ copied, copy }) => (
-            <Button color={copied ? "teal" : "blue"} onClick={copy}>
-              {copied ? "Copied url" : "Copy url"}
-            </Button>
-          )}
-        </CopyButton>
-
-        <a href="#/" className="link">
-          или перейти к первому шагу
-        </a>
-      </Modal>
     </>
   );
 }

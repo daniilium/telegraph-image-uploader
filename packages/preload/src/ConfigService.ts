@@ -1,27 +1,18 @@
 import * as os from "os";
 import * as path from "path";
-// import * as fs from "fs";
-import { fileService, IFileService } from "./FileService";
 
-export interface IConfigService {
-  readKey(key: keyof initConfig): string;
-  writeKey(key: keyof initConfig, value: string): void;
-}
+import { fileService } from "./FileService";
 
 type initConfig = {
   token: string;
   workFolder: string;
 };
 
-class ConfigService implements IConfigService {
-  private fileService: IFileService;
+class ConfigService {
   private path: string;
-
   private initConfig: initConfig;
 
-  constructor(fileService: IFileService) {
-    this.fileService = fileService;
-
+  constructor() {
     // const homedir = fileService.getHomeDir();
     const homedir = os.homedir();
     const configName = ".telegraph-image-uploader.json";
@@ -63,22 +54,22 @@ class ConfigService implements IConfigService {
     return object;
   }
 
-  chooseFolder(pathFile: string) {
+  chooseFolder(pathFile: string): string {
     const newPath = path.dirname(pathFile);
-    // this.writeKey("workFolder", newPath);
+    this.writeKey("workFolder", newPath);
 
     return newPath;
   }
 
   private exist(): boolean {
-    return this.fileService.exist(this.path);
+    return fileService.exist(this.path);
   }
 
   private create(config = this.initConfig): void {
     const path = this.path;
     const payload = JSON.stringify(config);
-    this.fileService.create(path, payload);
+    fileService.create(path, payload);
   }
 }
 
-export const configService = new ConfigService(fileService);
+export const configService = new ConfigService();

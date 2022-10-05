@@ -12,6 +12,14 @@ async function createWindow() {
       webviewTag: false, // The webview tag is not recommended. Consider alternatives like an iframe or Electron's BrowserView. @see https://www.electronjs.org/docs/latest/api/webview-tag#warning
       preload: join(app.getAppPath(), "packages/preload/dist/index.cjs"),
     },
+    width: 744,
+    height: 565,
+    minWidth: 744,
+    minHeight: 565,
+    // maxWidth: 744,
+    // frame: false,
+    // resizable: false,
+    // center: true,
   });
 
   // https://pratikpc.medium.com/bypassing-cors-with-electron-ab7eaf331605
@@ -59,9 +67,9 @@ async function createWindow() {
   browserWindow.on("ready-to-show", () => {
     browserWindow?.show();
 
-    if (import.meta.env.DEV) {
-      browserWindow?.webContents.openDevTools();
-    }
+    // if (import.meta.env.DEV) {
+    browserWindow?.webContents.openDevTools();
+    // }
   });
 
   /**

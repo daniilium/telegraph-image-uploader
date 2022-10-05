@@ -6,3 +6,4 @@ export { fileService } from "./FileService";
 export { configService } from "./ConfigService";
 export { imageService } from "./ImageService";
 export { telegraphService } from "./TelegraphService";
+export { pageService } from "./PageService";
