@@ -5,7 +5,7 @@ import conf from "conf";
 
 import {
   filterImages,
-  getFiles,
+  ls,
   isFolder,
   sizeValidation,
   sortImages,
@@ -34,7 +34,7 @@ export async function selectFolder() {
 
   let filesInFolder;
   try {
-    filesInFolder = await getFiles(folder);
+    filesInFolder = await ls(folder);
   } catch (e) {
     const message = e.message as string;
 

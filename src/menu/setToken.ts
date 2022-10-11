@@ -1,6 +1,7 @@
 import conf from "conf";
 import inquirer from "inquirer";
 
+import { DEFAULT_TOKEN } from "../services/constants.js";
 import { getAccount } from "../services/index.js";
 import { main } from "./index.js";
 
@@ -18,10 +19,7 @@ export function setToken() {
       name: "token",
       message: "What's your token",
       default() {
-        return (
-          config.get("token") ||
-          "d3b25feccb89e508a9114afb82aa421fe2a9712b963b387cc5ad71e58722"
-        );
+        return config.get("token") || DEFAULT_TOKEN;
       },
       async validate(token: string) {
         const result = await getAccount(token);

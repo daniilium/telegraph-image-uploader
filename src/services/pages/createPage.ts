@@ -1,5 +1,5 @@
 import fetch from "node-fetch";
-import { ContentNode, ErrorMessage, NewPage, Page } from "../types.js";
+import { ContentNode, ErrorMessage, NewPage } from "../types.js";
 
 export async function createPage(
   title: string,

@@ -8,6 +8,7 @@ import {
   uploadImages,
 } from "../services/index.js";
 import { ErrorMessage } from "../services/types.js";
+import { DEFAULT_TOKEN } from "../services/constants.js";
 
 const config = new conf();
 
@@ -33,9 +34,7 @@ export async function createPage(
 
       const uploadedImages = await uploadImages(images, folder);
       const content = createImageTags(uploadedImages);
-      let token =
-        (config.get("token") as undefined | string) ||
-        "d3b25feccb89e508a9114afb82aa421fe2a9712b963b387cc5ad71e58722";
+      let token = (config.get("token") as undefined | string) || DEFAULT_TOKEN;
 
       const page = await createPageFetch(pageName, content, token);
 

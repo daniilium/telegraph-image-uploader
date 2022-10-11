@@ -1,6 +1,6 @@
 import fs from "fs";
 
-export async function getFiles(path: string): Promise<string[]> {
+export async function ls(path: string): Promise<string[]> {
   let result = [];
 
   const dir = await fs.promises.opendir(path);

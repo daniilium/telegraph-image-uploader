@@ -5,7 +5,7 @@ import conf from "conf";
 
 const config = new conf();
 
-import { getFiles, isFolder } from "../services/index.js";
+import { ls, isFolder } from "../services/index.js";
 import { main } from "./index.js";
 
 inquirer.registerPrompt("file-tree-selection", inquirerFileTreeSelection);
@@ -30,7 +30,7 @@ export async function setWorkFolder() {
 
   let filesInFolder;
   try {
-    filesInFolder = await getFiles(folder);
+    filesInFolder = await ls(folder);
   } catch (e) {
     const message = e.message as string;
 
