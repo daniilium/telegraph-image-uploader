@@ -24,6 +24,8 @@
     "inquirer-file-tree-selection-prompt": "^2.0.4",
     "nanospinner": "^1.1.0",
     "node-fetch": "^3.2.10",
+    "node-stream-zip": "^1.15.0",
+    "rimraf": "^3.0.2",
     "telegraph-uploader": "^2.0.0"
   },
   "devDependencies": {

@@ -1,5 +1,4 @@
 // images
-export { getFiles } from "./images/getFiles.js";
 export { filterImages } from "./images/filterImages.js";
 export { sortImages } from "./images/sortImages.js";
 export { sizeValidation } from "./images/sizeValidation.js";
@@ -10,5 +9,11 @@ export { uploadImages } from "./images/uploadImages.js";
 export { createPage } from "./pages/createPage.js";
 
 // other
+export { ls } from "./other/ls.js";
 export { getAccount } from "./other/getAccount.js";
 export { isFolder } from "./other/isFolder.js";
+
+// zip
+export { createTemp } from "./zip/createTemp.js";
+export { clearTemp } from "./zip/clearTemp.js";
+export { unzip } from "./zip/unzip.js";

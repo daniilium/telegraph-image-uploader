@@ -1,21 +1,37 @@
 import fetch from "node-fetch";
+import { DEFAULT_TOKEN } from "../constants.js";
+import { getAccount } from "../index.js";
 import { ContentNode, ErrorMessage, NewPage } from "../types.js";
+import config from "conf";
 
 export async function createPage(
   title: string,
   content: ContentNode[],
   token: string
 ): Promise<NewPage | ErrorMessage> {
-  const convert = (content: ContentNode[]) => JSON.stringify(content);
+  const convert = (content) => JSON.stringify(content);
+  // TODO: сделать, чтобы пользователю всегда нужно было устанавливать токен перед использованием
+  const account = await getAccount(token);
+  if (!account.ok) return;
 
-  const request = fetch(
-    `https://api.telegra.ph/createPage?access_token=${token}` +
-      `&title=${title}` +
-      `&content=${convert(content)}&return_content=false`,
-    { method: "GET" }
-  );
+  const request = fetch(`https://api.telegra.ph/createPage`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: convert({
+      access_token: token,
+      content: content,
+      title: title,
+      author_name: account.result.author_name,
+      author_url: account.result.author_url,
+    }),
+  });
 
   const response = await request;
 
+  if (response.status !== 200)
+    return {
+      ok: false,
+      error: `ERROR: ${response.status} ${response.statusText}`,
+    };
   return (await response.json()) as NewPage | ErrorMessage;
 }

@@ -1,5 +1,5 @@
 import inquirer from "inquirer";
-import { selectFolder, setConfig } from "./index.js";
+import { selectArchive, selectFolder, setConfig } from "./index.js";
 
 export async function main() {
   console.log("Main menu:");
@@ -12,6 +12,7 @@ export async function main() {
 
   const { direction } = answers;
 
+  if ("Load archive" === direction) selectArchive();
   if ("Load folder" === direction) selectFolder();
   if ("Set config" === direction) setConfig();
   if ("Exit" === direction) console.log("Goodbye!");
