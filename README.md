@@ -1,4 +1,4 @@
-# telegraph-image-uploader
+# [telegraph-image-uploader](https://github.com/u1f5a4/telegraph-image-uploader)
 
 ## Описание/Description:
 RU: Это консольное приложение решает проблему загрузки папки или архива с изображениями в telegra.ph
@@ -42,5 +42,11 @@ EN:
 4. Launch the program using the "npm run start" command
 ```
 
+## Also
+RU: Для создания своего личного токена, можно воспользоваться [octograph](https://github.com/u1f5a4/octograph)
+
+EN: To create your personal token, you can use the [octograph](https://github.com/u1f5a4/octograph)
+
 ### Why not electron.js?
 The [develop branch](https://github.com/u1f5a4/telegraph-image-uploader/tree/develop) contains an implementation of this program using react and node.js. Due to difficulties with signing the application on different operating systems, the application has only been tested on macOS.
+
