@@ -9,15 +9,13 @@ export async function createPage(
   content: ContentNode[],
   token: string
 ): Promise<NewPage | ErrorMessage> {
-  const convert = (content) => JSON.stringify(content);
-  // TODO: сделать, чтобы пользователю всегда нужно было устанавливать токен перед использованием
   const account = await getAccount(token);
   if (!account.ok) return;
 
   const request = fetch(`https://api.telegra.ph/createPage`, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: convert({
+    body: JSON.stringify({
       access_token: token,
       content: content,
       title: title,
