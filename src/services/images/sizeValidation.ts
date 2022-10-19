@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 
-const maxSizeInMegabytes = 1.5;
+const maxSizeInMegabytes = 4.4;
 
 export async function sizeValidation(
   files: string[],
