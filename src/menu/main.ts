@@ -1,8 +1,14 @@
 import inquirer from "inquirer";
-import { selectArchive, selectFolder, setConfig } from "./index.js";
+import { globalState, writeTitle } from "../services/index.js";
+import { selectArchive, selectFolder, setConfig, setToken } from "./index.js";
 
 export async function main() {
-  console.log("Main menu:");
+  writeTitle("Main menu");
+
+  if (!globalState.token) {
+    return setToken();
+  }
+
   const answers = await inquirer.prompt({
     type: "list",
     name: "direction",
@@ -15,5 +21,8 @@ export async function main() {
   if ("Load archive" === direction) selectArchive();
   if ("Load folder" === direction) selectFolder();
   if ("Set config" === direction) setConfig();
-  if ("Exit" === direction) console.log("Goodbye!");
+  if ("Exit" === direction) {
+    console.log("Goodbye!");
+    process.exit(1);
+  }
 }

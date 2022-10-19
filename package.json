@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/u1f5a4/telegraph-image-uploader#readme",
   "dependencies": {
+    "chalk": "^5.1.1",
     "conf": "^10.2.0",
     "inquirer": "^9.1.2",
     "inquirer-file-tree-selection-prompt": "^2.0.4",

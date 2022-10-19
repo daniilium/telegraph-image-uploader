@@ -1,21 +1,20 @@
 import os from "os";
 import inquirer from "inquirer";
 import inquirerFileTreeSelection from "inquirer-file-tree-selection-prompt";
-import conf from "conf";
 
-const config = new conf();
-
-import { ls, isFolder } from "../services/index.js";
+import { ls, isFolder, globalState, writeStep } from "../services/index.js";
 import { main } from "./index.js";
 
 inquirer.registerPrompt("file-tree-selection", inquirerFileTreeSelection);
 
 export async function setWorkFolder() {
+  writeStep("Set work folder");
+
   const answers = await inquirer.prompt([
     {
       type: "file-tree-selection",
       name: "folder",
-      root: os.homedir(),
+      root: globalState.workDir || os.homedir(),
       message:
         "Selecting a folder or an archive  to download, will start from here:",
       enableGoUpperDirectory: true,
@@ -40,7 +39,7 @@ export async function setWorkFolder() {
     setWorkFolder();
   }
 
-  config.set("workFolder", folder);
-  console.log(`\nThis folder is set as a working folder: ${folder}`);
+  globalState.workDir = folder;
+  console.log(`New default work folder: ${folder}`);
   main();
 }
